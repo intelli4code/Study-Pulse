@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -22,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, PlusCircle, Edit, Trash2 } from 'lucide-react';
-import { ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 
 const logSchema = z.object({
   subject: z.string({ required_error: "Please select a subject." }),
@@ -31,6 +32,12 @@ const logSchema = z.object({
 });
 
 type LogFormValues = z.infer<typeof logSchema>;
+
+const chartConfig = {
+  totalMinutes: {
+    label: "Minutes",
+  },
+} satisfies ChartConfig;
 
 export default function DashboardClient() {
   const { user } = useAuth();
@@ -169,15 +176,15 @@ export default function DashboardClient() {
           </CardHeader>
           <CardContent>
              {studyLogs.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={weeklySummary} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                  <LineChart accessibilityLayer data={weeklySummary} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}m`} />
-                    <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey="totalMinutes" name="Minutes" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+                    <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent hideLabel />} />
+                    <Line type="monotone" dataKey="totalMinutes" name="Minutes" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                   </LineChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               ) : (
                 <div className="flex h-[300px] flex-col items-center justify-center text-center">
                     <p className="text-muted-foreground">No study data for the last week.</p>
@@ -192,14 +199,14 @@ export default function DashboardClient() {
           </CardHeader>
           <CardContent>
             {subjectSummary.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={subjectSummary} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                <BarChart accessibilityLayer data={subjectSummary} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                   <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}m`} />
-                  <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent nameKey="name" />} />
+                  <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent hideLabel />} />
                   <Bar dataKey="totalMinutes" name="Minutes" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             ) : (
               <div className="flex h-[300px] flex-col items-center justify-center text-center">
                  <p className="text-muted-foreground">No study data yet.</p>
@@ -352,3 +359,5 @@ export default function DashboardClient() {
     </div>
   );
 }
+
+    
