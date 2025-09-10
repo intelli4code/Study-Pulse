@@ -1,7 +1,7 @@
 import type { Achievement } from '@/lib/types';
 import { Award, Star, Zap, Target, BookOpen, Clock } from 'lucide-react';
 
-export const achievementsList: Achievement[] = [
+export const achievementsList: Omit<Achievement, 'icon'> & { icon: any }[] = [
   {
     id: 'first_session',
     title: 'First Step',

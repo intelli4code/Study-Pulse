@@ -20,12 +20,17 @@ export interface Achievement {
   id: string;
   title: string;
   description: string;
-  icon: LucideIcon;
+  icon: LucideIcon | string; // Allow for string for custom icon names
   color: string;
+  isCustom?: boolean; // Flag for custom achievements
+  criteria?: { // Criteria for custom achievements
+    type: 'totalDuration' | 'totalLogs' | 'uniqueSubjects';
+    value: number;
+  };
 }
 
 export interface UserAchievement {
-  id: string;
+  id:string;
   achievedAt: Timestamp;
 }
 
