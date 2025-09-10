@@ -3,6 +3,15 @@ import { type LucideIcon } from "lucide-react";
 import { type Timestamp } from "firebase/firestore";
 import { z } from 'zod';
 
+export interface UserProfile {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  role: 'admin' | 'user';
+  createdAt: Timestamp;
+}
+
 export interface StudyLog {
   id: string;
   userId: string;
