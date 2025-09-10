@@ -14,24 +14,25 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 
 export default function AdminPage() {
-    const { user, loading } = useAuth();
+    const { user, userProfile, loading } = useAuth();
     const router = useRouter();
-    const [isAuthorized, setIsAuthorized] = useState(false);
+
+    // This local state is no longer needed, we can rely on the userProfile from the hook.
 
     useEffect(() => {
+        // Wait until loading is complete before doing anything
         if (loading) return;
 
-        if (!user || user.email !== ADMIN_EMAIL) {
+        // If loading is done and there's no user, or the user is not an admin, redirect.
+        if (!user || userProfile?.role !== 'admin') {
             router.replace('/app/dashboard');
-            return;
         }
-
-        setIsAuthorized(true);
-    }, [user, loading, router]);
+    }, [user, userProfile, loading, router]);
 
 
-    if (loading || !isAuthorized) {
-        return null; // Or a loading spinner
+    // While loading or if the user is not an authorized admin, render nothing to prevent flicker.
+    if (loading || !user || userProfile?.role !== 'admin') {
+        return null;
     }
 
     return (
