@@ -2,7 +2,7 @@
 'use server';
 
 import { getFirebaseAdminApp } from '@/lib/firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
 
 const INITIAL_KEY = 'secret-admin-key-54321';
@@ -49,7 +49,12 @@ export async function verifyAdminKey(key: string): Promise<boolean> {
     } else {
       // If no key is in the DB (e.g., first run, or after a reset),
       // fall back to the initial hardcoded key.
-      return key === INITIAL_KEY;
+      if (key === INITIAL_KEY) {
+        // As a good practice, create the key in the DB on first successful hardcoded login.
+        await createAndSaveAdminKey();
+        return true;
+      }
+      return false;
     }
   } catch (error) {
     console.error("Error verifying admin key:", error);
@@ -68,7 +73,9 @@ export async function resetAdminKey(): Promise<void> {
     const adminDocRef = await getAdminDocRef();
     const docSnap = await adminDocRef.get();
     if (docSnap.exists) {
-        await adminDocRef.delete();
+         await adminDocRef.update({
+            key: FieldValue.delete()
+        });
     }
     // After deletion, the system will fall back to INITIAL_KEY for login.
 }
