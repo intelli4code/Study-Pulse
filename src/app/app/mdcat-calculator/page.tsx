@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Calculator, Sparkles } from "lucide-react";
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
   matricMarks: z.coerce.number().min(0, "Marks must be positive.").max(1200, "Marks cannot exceed 1200."),
@@ -22,9 +23,21 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function MdcatCalculatorPage() {
   const [aggregate, setAggregate] = useState<number | null>(null);
+  const [matricTotal, setMatricTotal] = useState(1200);
+  const [fscTotal, setFscTotal] = useState(1200);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema.refine(
+        (data) => data.matricMarks <= matricTotal, {
+            message: `Marks cannot exceed total marks of ${matricTotal}.`,
+            path: ['matricMarks'],
+        }
+    ).refine(
+        (data) => data.fscMarks <= fscTotal, {
+            message: `Marks cannot exceed total marks of ${fscTotal}.`,
+            path: ['fscMarks'],
+        }
+    )),
     defaultValues: {
       matricMarks: 0,
       fscMarks: 0,
@@ -34,8 +47,8 @@ export default function MdcatCalculatorPage() {
 
   function onSubmit(values: FormValues) {
     const { matricMarks, fscMarks, mdcatMarks } = values;
-    const matricPercentage = (matricMarks / 1200) * 10;
-    const fscPercentage = (fscMarks / 1200) * 40;
+    const matricPercentage = (matricMarks / matricTotal) * 10;
+    const fscPercentage = (fscMarks / fscTotal) * 40;
     const mdcatPercentage = (mdcatMarks / 180) * 50;
     const totalAggregate = fscPercentage + mdcatPercentage + matricPercentage;
     setAggregate(totalAggregate);
@@ -62,11 +75,22 @@ export default function MdcatCalculatorPage() {
                         name="matricMarks"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Matric / O-Level Equivalence Marks (out of 1200)</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="e.g., 1150" {...field} />
-                            </FormControl>
-                            <FormMessage />
+                                <FormLabel>Matric / O-Level Equivalence Marks</FormLabel>
+                                <div className="flex gap-2">
+                                    <FormControl>
+                                        <Input type="number" placeholder="e.g., 1050" {...field} />
+                                    </FormControl>
+                                    <Select value={String(matricTotal)} onValueChange={(value) => setMatricTotal(Number(value))}>
+                                        <SelectTrigger className="w-[120px]">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="1200">out of 1200</SelectItem>
+                                            <SelectItem value="1100">out of 1100</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <FormMessage />
                             </FormItem>
                         )}
                         />
@@ -74,12 +98,23 @@ export default function MdcatCalculatorPage() {
                         control={form.control}
                         name="fscMarks"
                         render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>F.Sc / A-Level Equivalence Marks (out of 1200)</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="e.g., 1050" {...field} />
-                            </FormControl>
-                            <FormMessage />
+                             <FormItem>
+                                <FormLabel>F.Sc / A-Level Equivalence Marks</FormLabel>
+                                <div className="flex gap-2">
+                                    <FormControl>
+                                        <Input type="number" placeholder="e.g., 1050" {...field} />
+                                    </FormControl>
+                                    <Select value={String(fscTotal)} onValueChange={(value) => setFscTotal(Number(value))}>
+                                        <SelectTrigger className="w-[120px]">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="1200">out of 1200</SelectItem>
+                                            <SelectItem value="1100">out of 1100</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <FormMessage />
                             </FormItem>
                         )}
                         />
