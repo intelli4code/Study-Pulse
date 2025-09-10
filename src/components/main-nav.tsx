@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Timer, BrainCircuit, CheckSquare, Trophy, MessageSquare, Target } from 'lucide-react';
+import { LayoutDashboard, Timer, BrainCircuit, CheckSquare, Trophy, MessageSquare, Target, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/app/plan', label: 'AI Study Plan', icon: BrainCircuit },
   { href: '/app/achievements', label: 'Achievements', icon: Trophy },
   { href: '/app/tutor', label: 'AI Tutor', icon: MessageSquare },
+  { href: '/app/community', label: 'Community', icon: Users },
 ];
 
 export default function MainNav() {
