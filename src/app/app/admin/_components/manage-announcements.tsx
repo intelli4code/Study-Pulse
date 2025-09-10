@@ -29,6 +29,7 @@ export default function ManageAnnouncements() {
   const { toast } = useToast();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementSchema),
@@ -63,11 +64,14 @@ export default function ManageAnnouncements() {
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this announcement?')) {
+      setDeletingId(id);
       try {
         await deleteDoc(doc(db, 'announcements', id));
         toast({ title: 'Success', description: 'Announcement deleted.' });
       } catch (error) {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete announcement.' });
+      } finally {
+        setDeletingId(null);
       }
     }
   };
@@ -139,8 +143,12 @@ export default function ManageAnnouncements() {
                       Published {ann.createdAt ? formatDistanceToNow(ann.createdAt.toDate(), { addSuffix: true }) : 'just now'}
                     </p>
                   </div>
-                  <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleDelete(ann.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                  <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleDelete(ann.id)} disabled={deletingId === ann.id}>
+                    {deletingId === ann.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    )}
                   </Button>
                 </li>
               ))}
