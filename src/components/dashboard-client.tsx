@@ -141,7 +141,7 @@ export default function DashboardClient() {
     const data = last7Days.map(date => {
       const dateString = format(date, 'yyyy-MM-dd');
       const totalDuration = studyLogs
-        .filter(log => format(log.timestamp.toDate(), 'yyyy-MM-dd') === dateString)
+        .filter(log => log.timestamp && format(log.timestamp.toDate(), 'yyyy-MM-dd') === dateString)
         .reduce((acc, log) => acc + log.duration, 0);
       return {
         date: format(date, 'MMM d'),
@@ -175,7 +175,7 @@ export default function DashboardClient() {
                     <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}m`} />
                     <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey="totalMinutes" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+                    <Line type="monotone" dataKey="totalMinutes" name="Minutes" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -196,8 +196,8 @@ export default function DashboardClient() {
                 <BarChart data={subjectSummary} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                   <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}m`} />
-                  <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent />} />
-                  <Bar dataKey="totalMinutes" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent nameKey="name" />} />
+                  <Bar dataKey="totalMinutes" name="Minutes" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -246,8 +246,12 @@ export default function DashboardClient() {
                       <TableCell>{log.duration} min</TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                            <span>{format(new Timestamp(log.timestamp.seconds, log.timestamp.nanoseconds).toDate(), 'PP')}</span>
-                            <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Timestamp(log.timestamp.seconds, log.timestamp.nanoseconds).toDate(), { addSuffix: true })}</span>
+                            {log.timestamp ? (
+                                <>
+                                    <span>{format(log.timestamp.toDate(), 'PP')}</span>
+                                    <span className="text-xs text-muted-foreground">{formatDistanceToNow(log.timestamp.toDate(), { addSuffix: true })}</span>
+                                </>
+                            ) : "Just now"}
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell truncate max-w-xs">{log.notes || 'N/A'}</TableCell>

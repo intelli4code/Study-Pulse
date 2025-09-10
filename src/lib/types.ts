@@ -6,7 +6,7 @@ export interface StudyLog {
   userId: string;
   subject: string;
   duration: number;
-  notes: string;
+  notes?: string;
   timestamp: Timestamp;
 }
 
