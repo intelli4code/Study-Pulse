@@ -132,47 +132,10 @@ const SidebarContent = React.forwardRef<
 ));
 SidebarContent.displayName = "SidebarContent";
 
-const SidebarHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6",
-      className
-    )}
-    {...props}
-  />
-)
-SidebarHeader.displayName = "SidebarHeader"
-
-const SidebarFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "mt-auto p-4",
-      className
-    )}
-    {...props}
-  />
-)
-SidebarFooter.displayName = "SidebarFooter"
-
-// Dummy SidebarInset for compatibility
-const SidebarInset: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => {
-  return <div className={className}>{children}</div>;
-};
-
-
 export {
   SidebarProvider,
   useSidebar,
   Sidebar,
   SidebarTrigger,
   SidebarContent,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarInset, // Keep for compatibility if used elsewhere, but it does nothing now.
 };

@@ -1,9 +1,10 @@
 'use client';
 
 import { signOut } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -16,9 +17,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { Shield } from 'lucide-react';
 
 export default function UserNav() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -49,14 +52,26 @@ export default function UserNav() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col space-y-2">
             <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            {userProfile && (
+              <Badge variant={userProfile.role === 'admin' ? 'destructive' : 'secondary'} className="capitalize w-fit mt-1">
+                {userProfile.role}
+              </Badge>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {/* Future items can go here */}
+          {userProfile?.role === 'admin' && (
+             <DropdownMenuItem asChild>
+                <Link href="/app/admin">
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span>Admin Panel</span>
+                </Link>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>

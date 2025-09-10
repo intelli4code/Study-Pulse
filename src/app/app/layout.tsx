@@ -41,18 +41,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="flex flex-col">
-           <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:hidden">
-            <Sidebar>
-                <SidebarTrigger />
-                <SidebarContent>
-                    <MainNav />
-                </SidebarContent>
-            </Sidebar>
+           <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+            <div className="md:hidden">
+              <Sidebar>
+                  <SidebarTrigger />
+                  <SidebarContent>
+                      <MainNav />
+                  </SidebarContent>
+              </Sidebar>
+            </div>
             <div className="flex items-center gap-4 md:hidden">
                 <Logo />
             </div>
-            <div className="flex-1" />
-            <UserNav />
+            <div className="ml-auto flex items-center gap-4">
+              <UserNav />
+            </div>
           </header>
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">{children}</main>
         </div>

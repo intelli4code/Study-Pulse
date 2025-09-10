@@ -7,7 +7,6 @@ import { LayoutDashboard, Timer, BrainCircuit, CheckSquare, Trophy, MessageSquar
 import { cn } from '@/lib/utils';
 import { Separator } from './ui/separator';
 import { useAuth } from '@/hooks/use-auth';
-import { ADMIN_EMAIL } from '@/lib/constants';
 
 const mainNavItems = [
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -39,7 +38,7 @@ const adminNavItems = [
 
 export default function MainNav() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { userProfile } = useAuth();
   
   const renderNavSection = (items: typeof mainNavItems, title?: string) => (
     <div className="grid items-start gap-1">
@@ -72,7 +71,7 @@ export default function MainNav() {
       {renderNavSection(communityNavItems, "Community")}
       <Separator />
       {renderNavSection(moreNavItems, "More")}
-      {user && user.email === ADMIN_EMAIL && (
+      {userProfile?.role === 'admin' && (
         <>
           <Separator />
           {renderNavSection(adminNavItems, "Admin")}
