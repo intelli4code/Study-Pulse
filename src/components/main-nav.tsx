@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Timer, BrainCircuit, CheckSquare, Trophy, MessageSquare, Target, Users, Megaphone, Mail, Link as LinkIcon, Calculator } from 'lucide-react';
+import { LayoutDashboard, Timer, BrainCircuit, CheckSquare, Trophy, MessageSquare, Target, Users, Megaphone, Mail, Link as LinkIcon, Calculator, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from './ui/separator';
+import { useAuth } from '@/hooks/use-auth';
+import { ADMIN_EMAIL } from '@/lib/constants';
 
 const mainNavItems = [
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -28,10 +30,15 @@ const moreNavItems = [
     { href: '/app/resources', label: 'Resources', icon: LinkIcon },
     { href: '/app/announcements', label: 'Announcements', icon: Megaphone },
     { href: '/app/contact', label: 'Contact & Feedback', icon: Mail },
-]
+];
+
+const adminNavItems = [
+    { href: '/app/admin', label: 'Admin Panel', icon: Shield },
+];
 
 export default function MainNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
   
   const renderNavSection = (items: typeof mainNavItems, title?: string) => (
     <div className="grid items-start gap-1">
@@ -64,6 +71,12 @@ export default function MainNav() {
       {renderNavSection(communityNavItems, "Community")}
       <Separator />
       {renderNavSection(moreNavItems, "More")}
+      {user && user.email === ADMIN_EMAIL && (
+        <>
+          <Separator />
+          {renderNavSection(adminNavItems, "Admin")}
+        </>
+      )}
     </nav>
   );
 }

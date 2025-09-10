@@ -40,3 +40,19 @@ export interface Goal {
     createdAt: Timestamp;
     completedAt?: Timestamp;
 }
+
+export interface Announcement {
+    id: string;
+    title: string;
+    content: string;
+    createdAt: Timestamp;
+}
+
+export interface Feedback {
+    id: string;
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    createdAt: Timestamp;
+}

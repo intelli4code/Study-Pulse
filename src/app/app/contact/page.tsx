@@ -9,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, MessageSquare, Send } from "lucide-react";
+import { Mail, Send, Loader2 } from "lucide-react";
+import { submitFeedback } from "./actions";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -31,15 +32,23 @@ export default function ContactPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real app, you would handle the form submission here,
-    // e.g., send an email or save to a database.
-    console.log(values);
-    toast({
-      title: "Message Sent!",
-      description: "Thank you for your feedback. We'll get back to you soon.",
-    });
-    form.reset();
+  const { isSubmitting } = form.formState;
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await submitFeedback(values);
+      toast({
+        title: "Message Sent!",
+        description: "Thank you for your feedback. We'll get back to you soon.",
+      });
+      form.reset();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: "There was an error submitting your feedback. Please try again.",
+      });
+    }
   }
 
   return (
@@ -111,8 +120,8 @@ export default function ContactPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit">
-                <Send className="mr-2 h-4 w-4" />
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                 Submit
               </Button>
             </form>

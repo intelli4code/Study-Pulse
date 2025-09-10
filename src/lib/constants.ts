@@ -13,3 +13,5 @@ export const SUBJECTS: Subject[] = [
   { name: 'Music', icon: Music, color: 'text-pink-500' },
   { name: 'Languages', icon: Languages, color: 'text-cyan-500' },
 ];
+
+export const ADMIN_EMAIL = 'admin@studypulse.com';

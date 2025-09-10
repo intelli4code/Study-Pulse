@@ -1,29 +1,32 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Megaphone } from 'lucide-react';
+import { Megaphone, Loader2 } from 'lucide-react';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Announcement } from '@/lib/types';
+import { format } from 'date-fns';
 
 export default function AnnouncementsPage() {
-  const announcements = [
-    {
-      id: 1,
-      title: 'Welcome to the New StudyPulse!',
-      date: 'October 26, 2023',
-      content: 'We are thrilled to launch the brand new version of StudyPulse, packed with new features to help you achieve your academic goals. Explore the new dashboard, set your goals, and start tracking your progress!',
-    },
-    {
-      id: 2,
-      title: 'AI Tutor is now available',
-      date: 'October 25, 2023',
-      content: 'Have a question? Need help with a difficult concept? Our new AI Tutor is here to help you 24/7. Find it in the sidebar!',
-    },
-     {
-      id: 3,
-      title: 'Community Leaderboard Launched!',
-      date: 'October 24, 2023',
-      content: 'Check out the new Community page to see how you stack up against other learners. Climb the ranks by logging your study time.',
-    }
-  ];
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const announcementsRef = collection(db, 'announcements');
+    const q = query(announcementsRef, orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedAnnouncements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
+      setAnnouncements(fetchedAnnouncements);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching announcements:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,26 +35,40 @@ export default function AnnouncementsPage() {
         <p className="text-muted-foreground">Latest news and updates from the StudyPulse team.</p>
       </div>
 
-      <div className="space-y-4">
-        {announcements.map((announcement) => (
-          <Card key={announcement.id}>
-            <CardHeader>
-                <div className="flex items-center gap-4">
-                    <div className="bg-primary/10 p-2 rounded-full">
-                        <Megaphone className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                        <CardTitle>{announcement.title}</CardTitle>
-                        <CardDescription>{announcement.date}</CardDescription>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{announcement.content}</p>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : announcements.length === 0 ? (
+        <Card>
+            <CardContent className="p-10 text-center text-muted-foreground">
+                <p>No announcements at the moment. Check back later!</p>
             </CardContent>
-          </Card>
-        ))}
-      </div>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {announcements.map((announcement) => (
+            <Card key={announcement.id}>
+              <CardHeader>
+                  <div className="flex items-center gap-4">
+                      <div className="bg-primary/10 p-2 rounded-full">
+                          <Megaphone className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                          <CardTitle>{announcement.title}</CardTitle>
+                          <CardDescription>
+                            {announcement.createdAt ? format(announcement.createdAt.toDate(), 'PP') : 'Just now'}
+                          </CardDescription>
+                      </div>
+                  </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground whitespace-pre-wrap">{announcement.content}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
