@@ -5,6 +5,8 @@ import { getFirebaseAdminApp } from '@/lib/firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
 
+const INITIAL_KEY = 'secret-admin-key-54321';
+
 async function getSettingsRef() {
     const app = getFirebaseAdminApp();
     const db = getFirestore(app);
@@ -20,15 +22,26 @@ export async function getAdminKey(): Promise<string> {
   if (docSnap.exists && docData && docData.key) {
     return docData.key;
   }
-  // If no key, create an initial one
-  const initialKey = 'secret-admin-key-54321';
-  await settingsRef.set({ key: initialKey });
-  return initialKey;
+  // If no key exists, create a new secure random one.
+  const newKey = `sk-${randomBytes(16).toString('hex')}`;
+  await settingsRef.set({ key: newKey });
+  return newKey;
 }
 
 // Function to verify the admin key
 export async function verifyAdminKey(key: string): Promise<boolean> {
   try {
+    // For the very first login, allow the initial hardcoded key.
+    // After this, the user is expected to regenerate it.
+    const settingsRef = await getSettingsRef();
+    const docSnap = await settingsRef.get();
+    if (!docSnap.exists && key === INITIAL_KEY) {
+        // If no key is in the DB and the user provides the initial key,
+        // set it in the DB and allow login.
+        await settingsRef.set({ key: INITIAL_KEY });
+        return true;
+    }
+    
     const adminKey = await getAdminKey();
     return key === adminKey;
   } catch (error) {
