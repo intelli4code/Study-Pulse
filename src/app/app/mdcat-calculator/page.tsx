@@ -13,8 +13,9 @@ import { Calculator, Sparkles } from "lucide-react";
 import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
-  fscMarks: z.coerce.number().min(0, "Marks must be positive.").max(1100, "Marks cannot exceed 1100."),
-  mdcatMarks: z.coerce.number().min(0, "Marks must be positive.").max(200, "Marks cannot exceed 200."),
+  matricMarks: z.coerce.number().min(0, "Marks must be positive.").max(1200, "Marks cannot exceed 1200."),
+  fscMarks: z.coerce.number().min(0, "Marks must be positive.").max(1200, "Marks cannot exceed 1200."),
+  mdcatMarks: z.coerce.number().min(0, "Marks must be positive.").max(180, "Marks cannot exceed 180."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -25,16 +26,18 @@ export default function MdcatCalculatorPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      matricMarks: 0,
       fscMarks: 0,
       mdcatMarks: 0,
     },
   });
 
   function onSubmit(values: FormValues) {
-    const { fscMarks, mdcatMarks } = values;
-    const fscPercentage = (fscMarks / 1100) * 50;
-    const mdcatPercentage = (mdcatMarks / 200) * 50;
-    const totalAggregate = fscPercentage + mdcatPercentage;
+    const { matricMarks, fscMarks, mdcatMarks } = values;
+    const matricPercentage = (matricMarks / 1200) * 10;
+    const fscPercentage = (fscMarks / 1200) * 40;
+    const mdcatPercentage = (mdcatMarks / 180) * 50;
+    const totalAggregate = fscPercentage + mdcatPercentage + matricPercentage;
     setAggregate(totalAggregate);
   }
 
@@ -49,17 +52,30 @@ export default function MdcatCalculatorPage() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Calculator className="h-5 w-5" /> Enter Your Marks</CardTitle>
-                <CardDescription>Based on the 50% F.Sc. and 50% MDCAT weightage.</CardDescription>
+                <CardDescription>Based on 10% Matric, 40% F.Sc., and 50% MDCAT weightage.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <FormField
                         control={form.control}
+                        name="matricMarks"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Matric / O-Level Equivalence Marks (out of 1200)</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="e.g., 1150" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <FormField
+                        control={form.control}
                         name="fscMarks"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>F.Sc / A-Level Equivalence Marks (out of 1100)</FormLabel>
+                            <FormLabel>F.Sc / A-Level Equivalence Marks (out of 1200)</FormLabel>
                             <FormControl>
                                 <Input type="number" placeholder="e.g., 1050" {...field} />
                             </FormControl>
@@ -72,9 +88,9 @@ export default function MdcatCalculatorPage() {
                         name="mdcatMarks"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>MDCAT Marks (out of 200)</FormLabel>
+                            <FormLabel>MDCAT Marks (out of 180)</FormLabel>
                             <FormControl>
-                                <Input type="number" placeholder="e.g., 180" {...field} />
+                                <Input type="number" placeholder="e.g., 155" {...field} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
