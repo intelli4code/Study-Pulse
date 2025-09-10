@@ -15,3 +15,16 @@ export interface Subject {
   icon: LucideIcon;
   color: string;
 }
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  color: string;
+}
+
+export interface UserAchievement {
+  id: string;
+  achievedAt: Timestamp;
+}
