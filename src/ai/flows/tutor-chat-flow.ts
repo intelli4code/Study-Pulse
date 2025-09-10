@@ -13,13 +13,13 @@ import {z} from 'genkit';
 import {MessageData} from 'genkit/experimental/ai';
 
 const TutorChatInputSchema = z.object({
-  history: z.array(z.custom<MessageData>()),
-  message: z.string().describe('The user\'s message to the tutor.'),
+  history: z.array(z.custom<MessageData>()).describe('The conversation history.'),
+  message: z.string().describe("The user's message to the tutor."),
 });
 export type TutorChatInput = z.infer<typeof TutorChatInputSchema>;
 
 const TutorChatOutputSchema = z.object({
-  response: z.string().describe('The tutor\'s response.'),
+  response: z.string().describe("The tutor's response."),
 });
 export type TutorChatOutput = z.infer<typeof TutorChatOutputSchema>;
 
@@ -36,9 +36,9 @@ const prompt = ai.definePrompt({
   Here is the conversation history:
   {{#each history}}
     {{#if (eq role 'user')}}
-      User: {{{text}}}
+      User: {{{content.[0].text}}}
     {{else if (eq role 'model')}}
-      Tutor: {{{text}}}
+      Tutor: {{{content.[0].text}}}
     {{/if}}
   {{/each}}
 

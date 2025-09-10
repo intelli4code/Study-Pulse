@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,6 +29,7 @@ export default function TutorPage() {
   const [chatHistory, setChatHistory] = useState<MessageData[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<ChatFormValues>({
     resolver: zodResolver(chatSchema),
@@ -36,18 +37,28 @@ export default function TutorPage() {
       message: '',
     },
   });
+  
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({
+            top: scrollAreaRef.current.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+  }, [chatHistory]);
+
 
   const onSubmit = async (data: ChatFormValues) => {
     setIsLoading(true);
     const userMessage: MessageData = { role: 'user', content: [{ text: data.message }] };
+    const newChatHistory = [...chatHistory, userMessage];
     
-    // Optimistically update UI
-    setChatHistory(prev => [...prev, userMessage]);
+    setChatHistory(newChatHistory);
     form.reset();
 
     try {
       const result = await getTutorResponse({
-        history: chatHistory,
+        history: newChatHistory.slice(0, -1), // Send history up to the last user message
         message: data.message,
       });
 
@@ -80,23 +91,27 @@ export default function TutorPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
-      <div className="p-4 lg:p-6 flex flex-col gap-2">
+    <div className="flex h-[calc(100vh-8rem)] flex-col">
+       <div className="mb-4">
          <h1 className="text-3xl font-bold tracking-tight">AI Tutor</h1>
          <p className="text-muted-foreground">Ask questions and get help on any subject.</p>
       </div>
 
-      <Card className="flex-1 flex flex-col mx-4 lg:mx-6 mb-6">
+      <Card className="flex-1 flex flex-col">
         <CardContent className="flex-1 p-0 flex flex-col">
-           <ScrollArea className="flex-1 p-6">
+           <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
             <div className="space-y-6">
                 {chatHistory.length === 0 && (
                     <div className="flex h-full items-center justify-center text-center text-muted-foreground">
-                        <p>Ask a question to start your session, e.g., "Explain the theory of relativity."</p>
+                        <div className="flex flex-col items-center gap-2">
+                            <MessageSquare className="h-10 w-10" />
+                            <p className="font-semibold">Start the conversation</p>
+                            <p className="text-sm">Ask a question to start your session, e.g., "Explain the theory of relativity."</p>
+                        </div>
                     </div>
                 )}
                 {chatHistory.map((message, index) => (
-                <div key={index} className={cn("flex items-start gap-4", message.role === 'user' && 'justify-end')}>
+                <div key={index} className={cn("flex items-start gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                     {message.role === 'model' && (
                         <Avatar className="h-9 w-9 border">
                             <div className="flex h-full w-full items-center justify-center bg-primary text-primary-foreground">
@@ -104,8 +119,12 @@ export default function TutorPage() {
                             </div>
                         </Avatar>
                     )}
-                    <div className={cn("max-w-md rounded-lg p-3", message.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground')}>
-                       <p className="text-sm whitespace-pre-wrap">{message.content[0].text}</p>
+                    <div className={cn(
+                        "max-w-xl rounded-lg p-3 prose prose-sm dark:prose-invert max-w-none", 
+                        message.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground',
+                        'whitespace-pre-wrap'
+                    )}>
+                       <p>{message.content[0].text}</p>
                     </div>
                      {message.role === 'user' && user && (
                         <Avatar className="h-9 w-9 border">
@@ -116,21 +135,21 @@ export default function TutorPage() {
                 </div>
                 ))}
                 {isLoading && (
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-4 justify-start">
                         <Avatar className="h-9 w-9 border">
                             <div className="flex h-full w-full items-center justify-center bg-primary text-primary-foreground">
                                 <Sparkles className="h-5 w-5" />
                             </div>
                         </Avatar>
                         <div className="max-w-md rounded-lg p-3 bg-muted">
-                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
                         </div>
                     </div>
                 )}
             </div>
           </ScrollArea>
 
-          <div className="border-t p-4">
+          <div className="border-t p-4 bg-background/95">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-4">
                 <FormField
@@ -139,14 +158,15 @@ export default function TutorPage() {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormControl>
-                        <Input placeholder="Ask about anything..." {...field} autoComplete="off" />
+                        <Input placeholder="Explain quantum physics in simple terms..." {...field} autoComplete="off" disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <Button type="submit" disabled={isLoading} size="icon">
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    <Send className="h-4 w-4" />
+                    <span className="sr-only">Send</span>
                 </Button>
               </form>
             </Form>
