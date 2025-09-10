@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, onSnapshot, orderBy, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
 import { type StudyLog } from '@/lib/types';
@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { ChartTooltipContent } from '@/components/ui/chart';
 
 const logSchema = z.object({
@@ -30,6 +30,8 @@ const logSchema = z.object({
   notes: z.string().optional(),
 });
 
+type LogFormValues = z.infer<typeof logSchema>;
+
 export default function DashboardClient() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -37,13 +39,10 @@ export default function DashboardClient() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingLog, setEditingLog] = useState<StudyLog | null>(null);
 
-  const form = useForm<z.infer<typeof logSchema>>({
+  const form = useForm<LogFormValues>({
     resolver: zodResolver(logSchema),
-    defaultValues: {
-      duration: 60,
-      notes: ""
-    }
   });
 
   useEffect(() => {
@@ -73,23 +72,59 @@ export default function DashboardClient() {
     return () => unsubscribe();
   }, [user, toast]);
 
-  const onSubmit = async (values: z.infer<typeof logSchema>) => {
+  const handleDialogOpen = (log: StudyLog | null = null) => {
+    setEditingLog(log);
+    if (log) {
+      form.reset({
+        subject: log.subject,
+        duration: log.duration,
+        notes: log.notes,
+      });
+    } else {
+      form.reset({
+        subject: '',
+        duration: 60,
+        notes: ''
+      });
+    }
+    setIsDialogOpen(true);
+  };
+  
+  const onSubmit = async (values: LogFormValues) => {
     if (!user) return;
     setIsSubmitting(true);
     try {
-      const logsCollectionRef = collection(db, 'users', user.uid, 'studyLogs');
-      await addDoc(logsCollectionRef, {
-        ...values,
-        userId: user.uid,
-        timestamp: serverTimestamp(),
-      });
-      toast({ title: "Success", description: "Study session logged." });
+      if (editingLog) {
+        // Update existing log
+        const logDocRef = doc(db, 'users', user.uid, 'studyLogs', editingLog.id);
+        await updateDoc(logDocRef, values);
+        toast({ title: "Success", description: "Study session updated." });
+      } else {
+        // Add new log
+        const logsCollectionRef = collection(db, 'users', user.uid, 'studyLogs');
+        await addDoc(logsCollectionRef, {
+          ...values,
+          userId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+        toast({ title: "Success", description: "Study session logged." });
+      }
       form.reset();
       setIsDialogOpen(false);
+      setEditingLog(null);
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to log session." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to save session." });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const deleteLog = async (logId: string) => {
+    if (!user) return;
+    if (window.confirm("Are you sure you want to delete this study session?")) {
+        const logDocRef = doc(db, 'users', user.uid, 'studyLogs', logId);
+        await deleteDoc(logDocRef);
+        toast({ title: "Success", description: "Study session deleted." });
     }
   };
   
@@ -181,82 +216,9 @@ export default function DashboardClient() {
             <CardTitle>Recent Sessions</CardTitle>
             <CardDescription>Your most recent study logs.</CardDescription>
           </div>
-           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" /> Log Session
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Log a New Study Session</DialogTitle>
-                  <DialogDescription>Fill in the details of your study session.</DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                    <FormField
-                      control={form.control}
-                      name="subject"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Subject</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a subject" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {SUBJECTS.map((subject) => (
-                                <SelectItem key={subject.name} value={subject.name}>
-                                  <div className="flex items-center gap-2">
-                                    <subject.icon className={`h-4 w-4 ${subject.color}`} />
-                                    {subject.name}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="duration"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Duration (minutes)</FormLabel>
-                          <FormControl>
-                            <Input type="number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Session Notes</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="What did you study? Any key takeaways?" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <DialogFooter>
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Log Session
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+          <Button onClick={() => handleDialogOpen()}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Log Session
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>
@@ -266,6 +228,7 @@ export default function DashboardClient() {
                 <TableHead>Duration</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="hidden md:table-cell">Notes</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -288,12 +251,20 @@ export default function DashboardClient() {
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell truncate max-w-xs">{log.notes || 'N/A'}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => handleDialogOpen(log)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteLog(log.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     No sessions logged yet.
                   </TableCell>
                 </TableRow>
@@ -302,6 +273,78 @@ export default function DashboardClient() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>{editingLog ? 'Edit Study Session' : 'Log a New Study Session'}</DialogTitle>
+              <DialogDescription>Fill in the details of your study session.</DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subject</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a subject" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {SUBJECTS.map((subject) => (
+                            <SelectItem key={subject.name} value={subject.name}>
+                              <div className="flex items-center gap-2">
+                                <subject.icon className={`h-4 w-4 ${subject.color}`} />
+                                {subject.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration (minutes)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Session Notes</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="What did you study? Any key takeaways?" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {editingLog ? 'Save Changes' : 'Log Session'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }

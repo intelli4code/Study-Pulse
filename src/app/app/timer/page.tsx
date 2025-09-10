@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'reac';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Pause, RotateCcw, Settings, BellRing } from 'lucide-react';
+import { Play, Pause, RotateCcw, Settings, BellRing, BookOpen } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -14,12 +14,26 @@ import {
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { SUBJECTS } from '@/lib/constants';
 
 type TimerMode = 'work' | 'shortBreak' | 'longBreak';
 
 export default function TimerPage() {
+  const { toast } = useToast();
+  const { user } = useAuth();
   const [settings, setSettings] = useState({ work: 25, shortBreak: 5, longBreak: 15 });
   const [mode, setMode] = useState<TimerMode>('work');
   const [time, setTime] = useState(settings.work * 60);
@@ -27,8 +41,34 @@ export default function TimerPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [progress, setProgress] = useState(100);
   const [endTime, setEndTime] = useState<string | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
   const totalDuration = useMemo(() => settings[mode] * 60, [settings, mode]);
+
+  const handleSessionLog = useCallback(async () => {
+    if (!user || !selectedSubject) return;
+    try {
+      const logsCollectionRef = collection(db, 'users', user.uid, 'studyLogs');
+      await addDoc(logsCollectionRef, {
+        subject: selectedSubject,
+        duration: settings.work,
+        notes: 'Logged from Pomodoro timer',
+        userId: user.uid,
+        timestamp: serverTimestamp(),
+      });
+      toast({
+        title: "Session Logged!",
+        description: `Your ${settings.work}-minute session for ${selectedSubject} has been saved.`,
+      });
+    } catch (error) {
+      console.error("Error logging session:", error);
+      toast({
+        variant: "destructive",
+        title: "Logging Error",
+        description: "Could not automatically log your session.",
+      });
+    }
+  }, [user, selectedSubject, settings.work, toast]);
 
   const handleModeChange = useCallback((newMode: TimerMode) => {
     setIsActive(false);
@@ -47,8 +87,11 @@ export default function TimerPage() {
       // Play sound
       const audio = new Audio('/sounds/bell.mp3');
       audio.play().catch(e => console.error("Error playing sound:", e));
-      // Switch mode automatically
+      
       if (mode === 'work') {
+        if(selectedSubject){
+            handleSessionLog();
+        }
         handleModeChange('shortBreak');
       } else {
         handleModeChange('work');
@@ -58,10 +101,12 @@ export default function TimerPage() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, time, mode, handleModeChange]);
+  }, [isActive, time, mode, handleModeChange, handleSessionLog, selectedSubject]);
   
   useEffect(() => {
-    setEndTime(new Date(Date.now() + time * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+    const now = new Date();
+    const end = new Date(now.getTime() + time * 1000);
+    setEndTime(end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
   }, [time]);
 
   useEffect(() => {
@@ -69,6 +114,14 @@ export default function TimerPage() {
   }, [time, totalDuration]);
 
   const toggleTimer = () => {
+    if (mode === 'work' && !selectedSubject) {
+        toast({
+            variant: "destructive",
+            title: "No Subject Selected",
+            description: "Please select a subject before starting the timer.",
+        });
+        return;
+    }
     setIsActive(!isActive);
   };
 
@@ -113,6 +166,29 @@ export default function TimerPage() {
             </TabsList>
           </Tabs>
 
+          {mode === 'work' && (
+             <div className="w-full max-w-xs">
+                <Select onValueChange={setSelectedSubject} disabled={isActive}>
+                    <SelectTrigger className="w-full">
+                        <div className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-muted-foreground" />
+                            <SelectValue placeholder="Select a subject to study" />
+                        </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                    {SUBJECTS.map((subject) => (
+                        <SelectItem key={subject.name} value={subject.name}>
+                        <div className="flex items-center gap-2">
+                            <subject.icon className={`h-4 w-4 ${subject.color}`} />
+                            {subject.name}
+                        </div>
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+            </div>
+          )}
+
           <div className="relative h-64 w-64">
             <svg className="h-full w-full" viewBox="0 0 100 100">
               <circle
@@ -140,9 +216,11 @@ export default function TimerPage() {
               <span className="text-5xl font-bold font-mono tabular-nums tracking-tighter">
                 {formatTime(time)}
               </span>
-              <p className='text-muted-foreground mt-2 flex items-center gap-2'>
-                <BellRing className='w-4 h-4'/> <span>End Time: {endTime}</span>
-              </p>
+              {isActive && endTime && (
+                <p className='text-muted-foreground mt-2 flex items-center gap-2'>
+                  <BellRing className='w-4 h-4'/> <span>End Time: {endTime}</span>
+                </p>
+              )}
             </div>
           </div>
 
