@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
         sessionStorage.setItem('admin-key', key);
         router.push('/app/admin');
       } else {
-        throw new Error('The provided key is incorrect.');
+        throw new Error('The provided admin key is incorrect.');
       }
     } catch (error: any) {
       toast({
