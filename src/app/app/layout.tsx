@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
-import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarContent, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarContent, SidebarTrigger } from '@/components/ui/sidebar';
 import MainNav from '@/components/main-nav';
 import UserNav from '@/components/user-nav';
 import Logo from '@/components/logo';
@@ -43,12 +43,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col">
            <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
             <Sidebar>
+                <SidebarTrigger />
                 <SidebarContent>
                     <MainNav />
                 </SidebarContent>
             </Sidebar>
             <div className="flex items-center gap-4 md:hidden">
-                <SidebarTrigger />
                 <Logo />
             </div>
             <div className="flex-1" />

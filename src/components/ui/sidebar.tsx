@@ -111,9 +111,9 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
 const SidebarTrigger = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
->(({ className, ...props }, ref) => (
+>((props, ref) => (
     <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className={cn("shrink-0", className)} {...props} ref={ref}>
+        <Button variant="outline" size="icon" {...props} ref={ref}>
             <PanelLeft className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
         </Button>
