@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { verifyAdminKey } from '@/app/app/admin/actions';
+import { verifyAdminKey, resetAdminKey } from '@/app/app/admin/actions';
 import Logo from '@/components/logo';
 
 export default function AdminLoginPage() {
@@ -17,6 +17,7 @@ export default function AdminLoginPage() {
   const { toast } = useToast();
   const [key, setKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +40,27 @@ export default function AdminLoginPage() {
       setIsLoading(false);
     }
   };
+
+  const handleResetKey = async () => {
+    if (window.confirm('Are you sure you want to reset the admin key to its default value? This is a last resort if you have lost your key.')) {
+        setIsResetting(true);
+        try {
+            await resetAdminKey();
+            toast({
+                title: 'Key Reset Successfully',
+                description: 'The admin key has been reset to the default value. You can now log in with it.',
+            });
+        } catch (error) {
+             toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to reset the admin key.',
+            });
+        } finally {
+            setIsResetting(false);
+        }
+    }
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -63,7 +85,7 @@ export default function AdminLoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || isResetting}>
               {isLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -73,6 +95,16 @@ export default function AdminLoginPage() {
             </Button>
           </form>
         </CardContent>
+        <CardFooter className="flex flex-col items-center justify-center pt-4 border-t">
+            <p className="text-xs text-muted-foreground mb-2">Lost your key?</p>
+             <Button variant="link" className="h-auto p-0 text-xs" onClick={handleResetKey} disabled={isResetting || isLoading}>
+                {isResetting ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting Key...</>
+                ): (
+                    'Reset to default'
+                )}
+             </Button>
+        </CardFooter>
       </Card>
     </div>
   );

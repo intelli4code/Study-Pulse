@@ -10,7 +10,6 @@ const INITIAL_KEY = 'secret-admin-key-54321';
 async function getSettingsRef() {
     const app = getFirebaseAdminApp();
     const db = getFirestore(app);
-    // Point to the correct collection and document ID provided by the user.
     return db.collection('admin').doc('TA4Yxz8MMELpHi5vhGcO');
 }
 
@@ -18,11 +17,11 @@ async function getSettingsRef() {
 export async function getAdminKey(): Promise<string> {
   const settingsRef = await getSettingsRef();
   const docSnap = await settingsRef.get();
-  const docData = docSnap.data();
-
-  if (docSnap.exists && docData && docData.key) {
-    return docData.key;
+  
+  if (docSnap.exists && docSnap.data()?.key) {
+    return docSnap.data()!.key;
   }
+  
   // If no key exists or document, create it with the initial key.
   await settingsRef.set({ key: INITIAL_KEY });
   return INITIAL_KEY;
@@ -45,4 +44,10 @@ export async function regenerateAdminKey(): Promise<string> {
     const newKey = `sk-${randomBytes(16).toString('hex')}`;
     await settingsRef.set({ key: newKey });
     return newKey;
+}
+
+// Function to reset the key to its initial value
+export async function resetAdminKey(): Promise<void> {
+    const settingsRef = await getSettingsRef();
+    await settingsRef.set({ key: INITIAL_KEY });
 }
