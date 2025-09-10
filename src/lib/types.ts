@@ -28,3 +28,15 @@ export interface UserAchievement {
   id: string;
   achievedAt: Timestamp;
 }
+
+export interface Goal {
+    id: string;
+    userId: string;
+    description: string;
+    subject: string;
+    targetMinutes: number;
+    currentMinutes: number;
+    completed: boolean;
+    createdAt: Timestamp;
+    completedAt?: Timestamp;
+}
