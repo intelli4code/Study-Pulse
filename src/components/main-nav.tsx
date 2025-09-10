@@ -2,26 +2,41 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Timer, BrainCircuit, CheckSquare, Trophy, MessageSquare, Target, Users } from 'lucide-react';
+import { LayoutDashboard, Timer, BrainCircuit, CheckSquare, Trophy, MessageSquare, Target, Users, Megaphone, Mail, Link as LinkIcon, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Separator } from './ui/separator';
 
-const navItems = [
+const mainNavItems = [
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/app/tasks', label: 'Tasks', icon: CheckSquare },
   { href: '/app/goals', label: 'Goals', icon: Target },
   { href: '/app/timer', label: 'Study Timer', icon: Timer },
+];
+
+const aiNavItems = [
   { href: '/app/plan', label: 'AI Study Plan', icon: BrainCircuit },
-  { href: '/app/achievements', label: 'Achievements', icon: Trophy },
   { href: '/app/tutor', label: 'AI Tutor', icon: MessageSquare },
+];
+
+const communityNavItems = [
+  { href: '/app/achievements', label: 'Achievements', icon: Trophy },
   { href: '/app/community', label: 'Community', icon: Users },
 ];
 
+const moreNavItems = [
+    { href: '/app/mdcat-calculator', label: 'MDCAT Calculator', icon: Calculator },
+    { href: '/app/resources', label: 'Resources', icon: LinkIcon },
+    { href: '/app/announcements', label: 'Announcements', icon: Megaphone },
+    { href: '/app/contact', label: 'Contact & Feedback', icon: Mail },
+]
+
 export default function MainNav() {
   const pathname = usePathname();
-
-  return (
-    <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-      {navItems.map((item) => {
+  
+  const renderNavSection = (items: typeof mainNavItems, title?: string) => (
+    <div className="grid items-start gap-1">
+      {title && <h2 className="px-3 py-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">{title}</h2>}
+      {items.map((item) => {
         const isActive = pathname.startsWith(item.href);
         return (
           <Link
@@ -37,6 +52,18 @@ export default function MainNav() {
           </Link>
         );
       })}
+    </div>
+  );
+
+  return (
+    <nav className="flex flex-col gap-4 px-2 text-sm font-medium lg:px-4 py-4">
+      {renderNavSection(mainNavItems)}
+      <Separator />
+      {renderNavSection(aiNavItems, "AI Tools")}
+      <Separator />
+      {renderNavSection(communityNavItems, "Community")}
+      <Separator />
+      {renderNavSection(moreNavItems, "More")}
     </nav>
   );
 }
