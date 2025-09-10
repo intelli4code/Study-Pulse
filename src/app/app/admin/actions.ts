@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getFirebaseAdminApp } from '@/lib/firebase-admin';
@@ -6,48 +7,62 @@ import { randomBytes } from 'crypto';
 
 const INITIAL_KEY = 'secret-admin-key-54321';
 
-async function getSettingsRef() {
+async function getAdminDocRef() {
     const app = getFirebaseAdminApp();
     const db = getFirestore(app);
     return db.collection('admin').doc('TA4Yxz8MMELpHi5vhGcO');
 }
 
-// Function to get or create the admin key
-export async function getAdminKey(): Promise<string> {
-  const settingsRef = await getSettingsRef();
-  const docSnap = await settingsRef.get();
+// Function to get the admin key from the database.
+async function getStoredAdminKey(): Promise<string | null> {
+  const adminDocRef = await getAdminDocRef();
+  const docSnap = await adminDocRef.get();
   
   if (docSnap.exists && docSnap.data()?.key) {
     return docSnap.data()!.key;
   }
-  
-  // If no key or document exists, create it with the initial key.
-  // This ensures first-time login works.
-  await settingsRef.set({ key: INITIAL_KEY });
-  return INITIAL_KEY;
+  return null;
 }
 
-// Function to verify the admin key
+// Function to create and save a new admin key.
+export async function createAndSaveAdminKey(): Promise<string> {
+    const adminDocRef = await getAdminDocRef();
+    const newKey = `sk-${randomBytes(16).toString('hex')}`;
+    await adminDocRef.set({ key: newKey });
+    return newKey;
+}
+
+// Function to verify the admin key.
 export async function verifyAdminKey(key: string): Promise<boolean> {
   try {
-    const adminKey = await getAdminKey();
-    return key === adminKey;
+    const storedKey = await getStoredAdminKey();
+    
+    if (storedKey) {
+      // If a key exists in the DB, use it for verification.
+      return key === storedKey;
+    } else {
+      // If no key is in the DB, fall back to the initial hardcoded key.
+      return key === INITIAL_KEY;
+    }
   } catch (error) {
     console.error("Error verifying admin key:", error);
     return false;
   }
 }
 
-// Function to regenerate the admin key
+// Function to regenerate the admin key (same as creating it).
 export async function regenerateAdminKey(): Promise<string> {
-    const settingsRef = await getSettingsRef();
-    const newKey = `sk-${randomBytes(16).toString('hex')}`;
-    await settingsRef.set({ key: newKey });
-    return newKey;
+    return createAndSaveAdminKey();
 }
 
-// Function to reset the key to its initial value
+// Function to reset the key by deleting it from the database, forcing a fallback to the initial key.
 export async function resetAdminKey(): Promise<void> {
-    const settingsRef = await getSettingsRef();
-    await settingsRef.set({ key: INITIAL_KEY });
+    const adminDocRef = await getAdminDocRef();
+    // Setting an empty object or deleting the doc will work.
+    // Let's delete the doc to be clean.
+    const docSnap = await adminDocRef.get();
+    if (docSnap.exists) {
+        await adminDocRef.delete();
+    }
+    // After deletion, the system will fall back to INITIAL_KEY
 }

@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
   };
 
   const handleResetKey = async () => {
-    if (window.confirm('Are you sure you want to reset the admin key to its default value? This is a last resort if you have lost your key.')) {
+    if (window.confirm('Are you sure you want to reset the admin key? This will revert access to the initial, hardcoded key.')) {
         setIsResetting(true);
         try {
             await resetAdminKey();
