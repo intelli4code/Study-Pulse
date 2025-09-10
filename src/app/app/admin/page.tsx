@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Megaphone, MailQuestion, KeyRound, RefreshCw, Copy } from 'lucide-react';
 import ManageAnnouncements from './_components/manage-announcements';
-import { getAdminKey, regenerateAdminKey } from './actions';
+import { regenerateAdminKey, verifyAdminKey } from './actions';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -21,32 +21,41 @@ export default function AdminPage() {
     const [adminKey, setAdminKey] = useState('');
 
     useEffect(() => {
-        if (!loading) {
+        if (loading) return;
+
+        if (!user || user.email !== ADMIN_EMAIL) {
+            router.replace('/app/dashboard');
+            return;
+        }
+
+        const checkAuthorization = async () => {
             const sessionKey = sessionStorage.getItem('admin-key');
-            if (!user || user.email !== ADMIN_EMAIL) {
-                router.replace('/app/dashboard');
+            if (!sessionKey) {
+                router.replace('/admin/login');
                 return;
             }
-            // Simple session check
-            getAdminKey().then(key => {
-                if (sessionKey !== key) {
-                    router.replace('/admin/login');
-                } else {
-                    setAdminKey(key);
-                    setIsAuthorized(true);
-                }
-            });
-        }
+
+            const isValid = await verifyAdminKey(sessionKey);
+            if (isValid) {
+                setAdminKey(sessionKey);
+                setIsAuthorized(true);
+            } else {
+                sessionStorage.removeItem('admin-key');
+                router.replace('/admin/login');
+            }
+        };
+
+        checkAuthorization();
     }, [user, loading, router]);
     
     const handleRegenerateKey = async () => {
-        if (window.confirm('Are you sure you want to regenerate the admin key? You will be logged out.')) {
+        if (window.confirm('Are you sure you want to regenerate the admin key? This will log you out.')) {
             try {
                 const newKey = await regenerateAdminKey();
                 setAdminKey(newKey);
-                sessionStorage.removeItem('admin-key');
-                toast({ title: 'Key Regenerated', description: 'Your new admin key has been generated. You will be redirected to log in again.' });
-                router.replace('/admin/login');
+                sessionStorage.setItem('admin-key', newKey);
+                toast({ title: 'Key Regenerated', description: 'Your new admin key has been generated and copied to your clipboard. Please save it securely.' });
+                navigator.clipboard.writeText(newKey);
             } catch (error) {
                  toast({ variant: 'destructive', title: 'Error', description: 'Failed to regenerate key.' });
             }
@@ -54,12 +63,14 @@ export default function AdminPage() {
     };
     
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(adminKey);
-        toast({ title: 'Copied!', description: 'Admin key copied to clipboard.' });
+        if(adminKey) {
+            navigator.clipboard.writeText(adminKey);
+            toast({ title: 'Copied!', description: 'Admin key copied to clipboard.' });
+        }
     };
 
     if (!isAuthorized) {
-        return null;
+        return null; // Or a loading spinner
     }
 
     return (
