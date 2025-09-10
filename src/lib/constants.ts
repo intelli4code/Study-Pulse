@@ -1,3 +1,4 @@
+
 import { type Subject } from '@/lib/types';
 import { Atom, Calculator, Code, FlaskConical, Globe, History, Languages, Music, Palette, ScrollText, Sigma } from 'lucide-react';
 
