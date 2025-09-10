@@ -11,6 +11,7 @@ import { Shield, Megaphone, MailQuestion, Rocket, Users, BarChart, Settings } fr
 import ManageAnnouncements from './_components/manage-announcements';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import ManageFeedback from './_components/manage-feedback';
 
 
 export default function AdminPage() {
@@ -97,7 +98,7 @@ export default function AdminPage() {
                         <Megaphone className="mr-2 h-4 w-4" />
                         Announcements
                     </TabsTrigger>
-                    <TabsTrigger value="feedback" disabled>
+                    <TabsTrigger value="feedback">
                         <MailQuestion className="mr-2 h-4 w-4" />
                         Feedback
                     </TabsTrigger>
@@ -106,15 +107,7 @@ export default function AdminPage() {
                     <ManageAnnouncements />
                 </TabsContent>
                 <TabsContent value="feedback">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Feedback</CardTitle>
-                            <CardDescription>View user-submitted feedback and bug reports.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="text-center text-muted-foreground p-10">
-                           <p>This feature is coming soon!</p>
-                        </CardContent>
-                    </Card>
+                    <ManageFeedback />
                 </TabsContent>
             </Tabs>
         </div>
