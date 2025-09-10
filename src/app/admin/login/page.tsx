@@ -50,6 +50,7 @@ export default function AdminLoginPage() {
                 title: 'Key Reset Successfully',
                 description: 'The admin key has been reset to the default value. You can now log in with it.',
             });
+            setKey('');
         } catch (error) {
              toast({
                 variant: 'destructive',

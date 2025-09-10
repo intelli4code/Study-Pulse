@@ -1,4 +1,3 @@
-
 'use server';
 
 import { getFirebaseAdminApp } from '@/lib/firebase-admin';
@@ -22,7 +21,8 @@ export async function getAdminKey(): Promise<string> {
     return docSnap.data()!.key;
   }
   
-  // If no key exists or document, create it with the initial key.
+  // If no key or document exists, create it with the initial key.
+  // This ensures first-time login works.
   await settingsRef.set({ key: INITIAL_KEY });
   return INITIAL_KEY;
 }
