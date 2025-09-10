@@ -15,13 +15,13 @@ export default function Icon() {
       <div
         style={{
           fontSize: 24,
-          background: 'hsl(207, 82%, 77%)',
+          background: 'hsl(217.2, 91.2%, 59.8%)',
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'hsl(210, 40%, 9.8%)',
+          color: 'hsl(210, 40%, 98%)',
           borderRadius: '8px',
         }}
       >

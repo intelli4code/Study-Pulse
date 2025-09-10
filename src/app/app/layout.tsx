@@ -31,7 +31,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <div className="min-h-screen">
         <Sidebar>
-          <SidebarHeader>
+          <SidebarHeader className="border-b">
             <Logo />
           </SidebarHeader>
           <SidebarContent>

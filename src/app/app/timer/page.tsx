@@ -26,6 +26,7 @@ export default function TimerPage() {
   const [isActive, setIsActive] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [progress, setProgress] = useState(100);
+  const [endTime, setEndTime] = useState<string | null>(null);
 
   const totalDuration = useMemo(() => settings[mode] * 60, [settings, mode]);
 
@@ -58,6 +59,10 @@ export default function TimerPage() {
       if (interval) clearInterval(interval);
     };
   }, [isActive, time, mode, handleModeChange]);
+  
+  useEffect(() => {
+    setEndTime(new Date(Date.now() + time * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+  }, [time]);
 
   useEffect(() => {
     setProgress((time / totalDuration) * 100);
@@ -136,7 +141,7 @@ export default function TimerPage() {
                 {formatTime(time)}
               </span>
               <p className='text-muted-foreground mt-2 flex items-center gap-2'>
-                <BellRing className='w-4 h-4'/> <span>End Time: {new Date(Date.now() + time * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                <BellRing className='w-4 h-4'/> <span>End Time: {endTime}</span>
               </p>
             </div>
           </div>
