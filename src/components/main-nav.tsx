@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Timer, BrainCircuit } from 'lucide-react';
+import { LayoutDashboard, Timer, BrainCircuit, CheckSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/app/tasks', label: 'Tasks', icon: CheckSquare },
   { href: '/app/timer', label: 'Study Timer', icon: Timer },
   { href: '/app/plan', label: 'AI Study Plan', icon: BrainCircuit },
 ];
@@ -15,9 +16,9 @@ export default function MainNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-col gap-2 px-2">
+    <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
       {navItems.map((item) => {
-        const isActive = pathname === item.href;
+        const isActive = pathname.startsWith(item.href);
         return (
           <Link
             key={item.label}
